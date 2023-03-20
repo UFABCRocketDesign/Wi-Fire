@@ -65,6 +65,7 @@ void setup()
   pinMode(IGN_4, OUTPUT);
   pinMode(A0, OUTPUT);
   digitalWrite(A0, LOW);
+  ajuda.begin();
 }
 
 void loop()
@@ -75,10 +76,14 @@ void loop()
     {
       data = LoRa.read();
       Serial.write(data);
-      if(data == 'S')
+      if(data == 'S') // Aciona a ignição
       {
         ajuda.forT(holdIGN);
         holder = data;
+      } else if(data == '*') // Retorna estado do sinal
+      {
+        Lora.print("Sistema operante, tempo T = ");
+        LoRa.println(ajuda.sinceBegin());
       }
     }
   }
