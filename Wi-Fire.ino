@@ -169,19 +169,6 @@ void loop() {
       }
     }
   }
-  if (!ajuda.forT()) holder = ' ';
-  digitalWrite(aciona, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_1, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_2, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_3, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_4, holder == 'S' ? ON : !ON);
-  // digitalWrite(buzzPin, holder == 'S' ? ON : !ON);
-  // if(holder == 'S') Serial.println("ON");
-  
-  if(pingCheck != 0){
-    if(beep(pingCheck > 0?3:1)) pingCheck=pingCheck+((pingCheck > 0) ? (-1) : (1));
-  }
-  else beep();
 
   if (Serial.available()) {
     LoRa.write(Serial.read());
@@ -245,6 +232,7 @@ void loop() {
       rgb(LED_ON,LED_ON,!LED_ON);
       break;
     case 5:
+      pingCheck = 2;
       rgb(LED_ON,!LED_ON,!LED_ON);
       break;
     default:
@@ -252,6 +240,20 @@ void loop() {
       else rgb(!LED_ON,!LED_ON,LED_ON);
     
   }
+  
+  if (!ajuda.forT()) holder = ' ';
+  digitalWrite(aciona, holder == 'S' ? ON : !ON);
+  // digitalWrite(IGN_1, holder == 'S' ? ON : !ON);
+  // digitalWrite(IGN_2, holder == 'S' ? ON : !ON);
+  // digitalWrite(IGN_3, holder == 'S' ? ON : !ON);
+  // digitalWrite(IGN_4, holder == 'S' ? ON : !ON);
+  // digitalWrite(buzzPin, holder == 'S' ? ON : !ON);
+  // if(holder == 'S') Serial.println("ON");
+  
+  if(pingCheck != 0){
+    if(beep(pingCheck > 0?3:1)) pingCheck=pingCheck+((pingCheck > 0) ? (-1) : (1));
+  }
+  else beep();
 
 }
 
