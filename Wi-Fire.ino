@@ -62,8 +62,8 @@ SoftwareSerial LoRa(7, 6);
 #define ON_SIG 1
 #define holdIGN 10
 
-#define M0_LORA_PIN 11 // Pinos adicionais do LoRa
-#define M1_LORA_PIN 12 // Pinos adicionais do LoRa
+#define M0_LORA_PIN 12 // Pinos adicionais do LoRa
+#define M1_LORA_PIN 11 // Pinos adicionais do LoRa
 #define AUX_LORA_PIN A8 // Pinos adicionais do LoRa
 
 int data = ' ';
@@ -216,64 +216,64 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
   } else digitalWrite(LED_BUILTIN, LOW);
 
-// #if USE_BUTTONS
-//   /* Botão Vermelho */
-//   if (digitalRead(B_R) == B_ON) {
-//     Serial.println("B_R");
-//     #if USE_RGB
-//     rgb(LED_ON,LED_ON,LED_ON);
-//     #endif //USE_RGB
-//     while (digitalRead(B_R) == B_ON);
-//     switch(estado){
-//       case 5: 
-//         LoRa.write('S');
-//         Serial.print("Enviou: S");
-//       default: estado = 0;
-//     }
-//   }
+#if USE_BUTTONS
+  /* Botão Vermelho */
+  if (digitalRead(B_R) == B_ON) {
+    Serial.println("B_R");
+    #if USE_RGB
+    rgb(LED_ON,LED_ON,LED_ON);
+    #endif //USE_RGB
+    while (digitalRead(B_R) == B_ON);
+    switch(estado){
+      case 5: 
+        LoRa.write('S');
+        Serial.print("Enviou: S");
+      default: estado = 0;
+    }
+  }
   
-//   /* Botão Azul */
-//   if (digitalRead(B_B) == B_ON) {
-//     Serial.println("B_B");
-//     #if USE_RGB
-//     rgb(LED_ON,LED_ON,LED_ON);
-//     #endif // USE_RGB
-//     while (digitalRead(B_B) == B_ON);
-//     switch(estado){
-//       case 0:
-//       case 2:
-//       case 3:
-//         estado++; break;
-//       default: estado = 0;
-//     }
-//   }
+  /* Botão Azul */
+  if (digitalRead(B_B) == B_ON) {
+    Serial.println("B_B");
+    #if USE_RGB
+    rgb(LED_ON,LED_ON,LED_ON);
+    #endif // USE_RGB
+    while (digitalRead(B_B) == B_ON);
+    switch(estado){
+      case 0:
+      case 2:
+      case 3:
+        estado++; break;
+      default: estado = 0;
+    }
+  }
   
-//   /* Botão Verde */
-//   if (digitalRead(B_G) == B_ON) {
-//     Serial.println("B_G");
-//     #if USE_RGB
-//     rgb(LED_ON,LED_ON,LED_ON);
-//     #endif // USE_RGB
-//     while (digitalRead(B_G) == B_ON);
-//     switch(estado){
-//       case 1:
-//       case 4:
-//         estado++; break;
-//       default: estado = 0;
-//     }
-//   }
+  /* Botão Verde */
+  if (digitalRead(B_G) == B_ON) {
+    Serial.println("B_G");
+    #if USE_RGB
+    rgb(LED_ON,LED_ON,LED_ON);
+    #endif // USE_RGB
+    while (digitalRead(B_G) == B_ON);
+    switch(estado){
+      case 1:
+      case 4:
+        estado++; break;
+      default: estado = 0;
+    }
+  }
   
-//   /* Botão Amarelo */
-//   if (digitalRead(B_Y) == B_ON) {
-//     Serial.println("B_Y");
-//     #if USE_RGB
-//     rgb(LED_ON,LED_ON,LED_ON);
-//     #endif // USE_RGB
-//     while (digitalRead(B_Y) == B_ON);
-//     LoRa.write('*');
-//     Serial.println("Enviou: *");
-//   }
-// #endif // USE_BUTTONS
+  /* Botão Amarelo */
+  if (digitalRead(B_Y) == B_ON) {
+    Serial.println("B_Y");
+    #if USE_RGB
+    rgb(LED_ON,LED_ON,LED_ON);
+    #endif // USE_RGB
+    while (digitalRead(B_Y) == B_ON);
+    LoRa.write('*');
+    Serial.println("Enviou: *");
+  }
+#endif // USE_BUTTONS
 
   // Serial.println(estado);
   switch(estado){
