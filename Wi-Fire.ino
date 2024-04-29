@@ -8,7 +8,7 @@ HardwareSerial &LoRa = Serial3;
 
 #define SD_CS_PIN 10
 #include <SoftwareSerial.h>
-SoftwareSerial LoRa(7, 6);
+SoftwareSerial LoRa(2, 3);
 
 #endif // ARDUINO_AVR_MEGA2560
 
@@ -68,8 +68,14 @@ SoftwareSerial LoRa(7, 6);
 
 int data = ' ';
 int holder = ' ';
-int estado = 0;
 int pingCheck = 0;
+
+#if USE_BUTTONS
+enum Buttons{blue=1, red=2, green=3, yellow=4};
+const Buttons password[] = {blue, green, blue, blue, green};
+int passwordIndex = 0;
+const int passwordLen = sizeof(password)/sizeof(password[0]);
+#endif // USE_BUTTONS
 
 class Helpful {
 private:
@@ -224,12 +230,15 @@ void loop() {
     rgb(LED_ON,LED_ON,LED_ON);
     #endif //USE_RGB
     while (digitalRead(B_R) == B_ON);
-    switch(estado){
-      case 5: 
-        LoRa.write('S');
-        Serial.print("Enviou: S");
-      default: estado = 0;
+
+    if(passwordIndex == passwordLen) {
+      LoRa.write('S');
+      Serial.print("Enviou: S");
+      passwordIndex = 0;
     }
+
+    if(password[passwordIndex] == red) passwordIndex++;
+    else passwordIndex = 0;
   }
   
   /* Botão Azul */
@@ -239,13 +248,9 @@ void loop() {
     rgb(LED_ON,LED_ON,LED_ON);
     #endif // USE_RGB
     while (digitalRead(B_B) == B_ON);
-    switch(estado){
-      case 0:
-      case 2:
-      case 3:
-        estado++; break;
-      default: estado = 0;
-    }
+
+    if(password[passwordIndex] == blue) passwordIndex++;
+    else passwordIndex = 0;
   }
   
   /* Botão Verde */
@@ -255,12 +260,9 @@ void loop() {
     rgb(LED_ON,LED_ON,LED_ON);
     #endif // USE_RGB
     while (digitalRead(B_G) == B_ON);
-    switch(estado){
-      case 1:
-      case 4:
-        estado++; break;
-      default: estado = 0;
-    }
+
+    if(password[passwordIndex] == green) passwordIndex++;
+    else passwordIndex = 0;
   }
   
   /* Botão Amarelo */
@@ -270,35 +272,30 @@ void loop() {
     rgb(LED_ON,LED_ON,LED_ON);
     #endif // USE_RGB
     while (digitalRead(B_Y) == B_ON);
+
+    if(password[passwordIndex] == yellow) passwordIndex++;
+    else passwordIndex = 0;
+
     LoRa.write('*');
     Serial.println("Enviou: *");
   }
 #endif // USE_BUTTONS
 
-  // Serial.println(estado);
-  switch(estado){
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-      #if USE_RGB
-      rgb(LED_ON,LED_ON,!LED_ON);
-      #endif // USE_RGB
-      break;
-    case 5:
-      pingCheck = 2;
-      #if USE_RGB
-      rgb(LED_ON,!LED_ON,!LED_ON);
-      #endif // USE_RGB
-      break;
-    default:
-      #if USE_RGB
-      if(pingCheck > 0) rgb(!LED_ON,LED_ON,!LED_ON);
-      else rgb(!LED_ON,!LED_ON,LED_ON);
-      #else
-      break; // Esse break eh inutil, mas deixar um possivel default sem argumentos eh pior
-      #endif // USE_RGB
-  }
+  if(passwordIndex == passwordLen) pingCheck = 2;
+
+
+  #if USE_RGB
+  if(passwordIndex == passwordLen) // Estado armado
+    rgb(LED_ON,!LED_ON,!LED_ON);
+  else if(passwordIndex>0) // Senha em percurso
+    rgb(LED_ON,LED_ON,!LED_ON);
+  else if(pingCheck > 0) // Ping com resposta positiva
+    rgb(!LED_ON,LED_ON,!LED_ON);
+  else if(ajuda.forT()) // Estado de acionamento
+    rgb(LED_ON,!LED_ON,LED_ON);
+  else // Estado normal
+    rgb(!LED_ON,!LED_ON,LED_ON);
+  #endif // USE_RGB
   
   if (!ajuda.forT()) holder = ' ';
   #if PROPER_BOARD
