@@ -1,30 +1,43 @@
-//#include <SoftwareSerial.h>
-//SoftwareSerial Serial3(7, 6);
-//Excuir este bloco para o Mega
+#ifdef ARDUINO_AVR_MEGA2560 // Arduino MEGA
 
-#define LoRa Serial3
-// #define LoRa Serial
+#define SD_CS_PIN 53
 
-#define IGN_1 36 /*act1*/
-#define IGN_2 61 /*act2*/
-#define IGN_3 46 /*act3*/
-#define IGN_4 55 /*act4*/
+HardwareSerial &LoRa = Serial3;
+
+#else // Arduino UNO
+
+#define SD_CS_PIN 10
+#include <SoftwareSerial.h>
+SoftwareSerial LoRa(7, 6);
+
+#endif // ARDUINO_AVR_MEGA2560
+
+#define PROPER_BOARD 1 // Quando utilizar a placa construída para o sistema
+
+#define USE_RGB (1 && PROPER_BOARD)
+#define USE_BUTTONS (1 && PROPER_BOARD)
+
+#define BuZZ (1)
+#define BEEPING (BuZZ && 1)
+
+
+
+#if USE_RGB
+#define LED_ON 0
 
 #define LED_R 32
 #define LED_G 36
 #define LED_B 34
+#endif // USE_RGB
 
-#define LED_ON 0
+#if USE_BUTTONS
+#define B_ON 1
 
 #define B_B 24
 #define B_R 26
 #define B_G 28
 #define B_Y 30
-
-#define B_ON 1
-
-#define BuZZ (1)
-#define BEEPING (BuZZ && 1)
+#endif // USE_BUTTONS
 
 #if BuZZ
 #define buzzPin 22              //Pin that the buzzer is connected
@@ -33,11 +46,25 @@
 #endif // BuZZ
 
 
-#define aciona A0
-#define ON 0
+#if PROPER_BOARD
+
+#define IGN A0
+
+#else
+
+#define IGN_1 36 /*act1*/
+#define IGN_2 61 /*act2*/
+#define IGN_3 46 /*act3*/
+#define IGN_4 55 /*act4*/
+
+#endif //PROPER_BOARD
+
+#define ON_SIG 1
 #define holdIGN 10
 
-
+#define M0_LORA_PIN 11 // Pinos adicionais do LoRa
+#define M1_LORA_PIN 12 // Pinos adicionais do LoRa
+#define AUX_LORA_PIN A8 // Pinos adicionais do LoRa
 
 int data = ' ';
 int holder = ' ';
@@ -83,69 +110,83 @@ Helpful beeper;
 #endif // BEEPING
 #define SYSTEM_n 5
 
-void rgb(bool r, bool g, bool b){
+#if USE_RGB
+inline void rgb(bool r, bool g, bool b){
   digitalWrite(LED_R, r);
   digitalWrite(LED_G, g);
   digitalWrite(LED_B, b);
 }
+#endif // USE_RGB
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, 0);
+  pinMode(LED_BUILTIN, OUTPUT); digitalWrite(LED_BUILTIN, LOW);
+
   Serial.begin(9600);
-  Serial3.begin(9600);
-  pinMode(11,OUTPUT);
-  pinMode(12,OUTPUT);
-  // pinMode(A8,OUTPUT);
-  digitalWrite(11,LOW);
-  digitalWrite(10,LOW);
-  // digitalWrite(A8,LOW);
-  pinMode(aciona, OUTPUT);
-  digitalWrite(aciona, !ON);
+
+  LoRa.begin(9600);
+  pinMode(M0_LORA_PIN,OUTPUT); digitalWrite(M0_LORA_PIN,LOW);
+  pinMode(M1_LORA_PIN,OUTPUT); digitalWrite(M1_LORA_PIN,LOW);
+  // pinMode(AUX_LORA_PIN,OUTPUT); digitalWrite(AUX_LORA_PIN,LOW);
+
+#if PROPER_BOARD
+  pinMode(IGN, OUTPUT); digitalWrite(IGN, !ON_SIG);
+#else
+  pinMode(IGN_1, OUTPUT); digitalWrite(IGN_1, !ON_SIG);
+  pinMode(IGN_2, OUTPUT); digitalWrite(IGN_2, !ON_SIG);
+  pinMode(IGN_3, OUTPUT); digitalWrite(IGN_3, !ON_SIG);
+  pinMode(IGN_4, OUTPUT); digitalWrite(IGN_4, !ON_SIG);
+#endif // PROPER_BOARD
+
+#if USE_BUTTONS
   pinMode(B_G, INPUT);
   pinMode(B_R, INPUT);
   pinMode(B_B, INPUT);
   pinMode(B_Y, INPUT);
-  pinMode(IGN_1, OUTPUT);
-  pinMode(IGN_2, OUTPUT);
-  pinMode(IGN_3, OUTPUT);
-  pinMode(IGN_4, OUTPUT);
+#endif //USE_BUTTONS
+
+#if USE_RGB
   pinMode(LED_R, OUTPUT);
   pinMode(LED_G, OUTPUT);
   pinMode(LED_B, OUTPUT);
+#endif //USE_RGB
+
   ajuda.begin();
 
 #if BuZZ
   pinMode(buzzPin, OUTPUT);
   digitalWrite(buzzPin, !buzzCmd);
 #endif // BuZZ
-  
-  Serial.println("Branco");
+
+#if USE_RGB  
+  // Serial.println("Branco");
   rgb(LED_ON,LED_ON,LED_ON);
   delay(100);
-  Serial.println("Vermelho");
+  // Serial.println("Vermelho");
   rgb(LED_ON,!LED_ON,!LED_ON);
   delay(100);
-  Serial.println("Amarelo");
+  // Serial.println("Amarelo");
   rgb(LED_ON,LED_ON,!LED_ON);
   delay(100);
-  Serial.println("Verde");
+  // Serial.println("Verde");
   rgb(!LED_ON,LED_ON,!LED_ON);
   delay(100);
-  Serial.println("Ciano");
+  // Serial.println("Ciano");
   rgb(!LED_ON,LED_ON,LED_ON);
   delay(100);
-  Serial.println("Azul");
+  // Serial.println("Azul");
   rgb(!LED_ON,!LED_ON,LED_ON);
   delay(100);
-  Serial.println("Magenta");
+  // Serial.println("Magenta");
   rgb(LED_ON,!LED_ON,LED_ON);
   delay(100);
-  Serial.println("Preto");
+  // Serial.println("Preto");
   rgb(!LED_ON,!LED_ON,!LED_ON);
   delay(100);
+#endif // USE_RGB
 
+#if BEEPING
   beep();
+#endif // BEEPING
 }
 
 void loop() {
@@ -175,53 +216,64 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
   } else digitalWrite(LED_BUILTIN, LOW);
 
-  /* Botão Vermelho */
-  if (digitalRead(B_R) == B_ON) {
-    Serial.println("B_R");
-    rgb(LED_ON,LED_ON,LED_ON);
-    while (digitalRead(B_R) == B_ON);
-    switch(estado){
-      case 5: 
-        LoRa.write('S');
-      default: estado = 0;
-    }
-  }
+// #if USE_BUTTONS
+//   /* Botão Vermelho */
+//   if (digitalRead(B_R) == B_ON) {
+//     Serial.println("B_R");
+//     #if USE_RGB
+//     rgb(LED_ON,LED_ON,LED_ON);
+//     #endif //USE_RGB
+//     while (digitalRead(B_R) == B_ON);
+//     switch(estado){
+//       case 5: 
+//         LoRa.write('S');
+//         Serial.print("Enviou: S");
+//       default: estado = 0;
+//     }
+//   }
   
-  /* Botão Azul */
-  if (digitalRead(B_B) == B_ON) {
-    Serial.println("B_B");
-    rgb(LED_ON,LED_ON,LED_ON);
-    while (digitalRead(B_B) == B_ON);
-    switch(estado){
-      case 0:
-      case 2:
-      case 3:
-        estado++; break;
-      default: estado = 0;
-    }
-  }
+//   /* Botão Azul */
+//   if (digitalRead(B_B) == B_ON) {
+//     Serial.println("B_B");
+//     #if USE_RGB
+//     rgb(LED_ON,LED_ON,LED_ON);
+//     #endif // USE_RGB
+//     while (digitalRead(B_B) == B_ON);
+//     switch(estado){
+//       case 0:
+//       case 2:
+//       case 3:
+//         estado++; break;
+//       default: estado = 0;
+//     }
+//   }
   
-  /* Botão Verde */
-  if (digitalRead(B_G) == B_ON) {
-    Serial.println("B_G");
-    rgb(LED_ON,LED_ON,LED_ON);
-    while (digitalRead(B_G) == B_ON);
-    switch(estado){
-      case 1:
-      case 4:
-        estado++; break;
-      default: estado = 0;
-    }
-  }
+//   /* Botão Verde */
+//   if (digitalRead(B_G) == B_ON) {
+//     Serial.println("B_G");
+//     #if USE_RGB
+//     rgb(LED_ON,LED_ON,LED_ON);
+//     #endif // USE_RGB
+//     while (digitalRead(B_G) == B_ON);
+//     switch(estado){
+//       case 1:
+//       case 4:
+//         estado++; break;
+//       default: estado = 0;
+//     }
+//   }
   
-  /* Botão Amarelo */
-  if (digitalRead(B_Y) == B_ON) {
-    Serial.println("B_Y");
-    rgb(LED_ON,LED_ON,LED_ON);
-    while (digitalRead(B_Y) == B_ON);
-    LoRa.print("*");
-    Serial.println("*");
-  }
+//   /* Botão Amarelo */
+//   if (digitalRead(B_Y) == B_ON) {
+//     Serial.println("B_Y");
+//     #if USE_RGB
+//     rgb(LED_ON,LED_ON,LED_ON);
+//     #endif // USE_RGB
+//     while (digitalRead(B_Y) == B_ON);
+//     LoRa.write('*');
+//     Serial.println("Enviou: *");
+//   }
+// #endif // USE_BUTTONS
 
   // Serial.println(estado);
   switch(estado){
@@ -229,31 +281,43 @@ void loop() {
     case 2:
     case 3:
     case 4:
+      #if USE_RGB
       rgb(LED_ON,LED_ON,!LED_ON);
+      #endif // USE_RGB
       break;
     case 5:
       pingCheck = 2;
+      #if USE_RGB
       rgb(LED_ON,!LED_ON,!LED_ON);
+      #endif // USE_RGB
       break;
     default:
+      #if USE_RGB
       if(pingCheck > 0) rgb(!LED_ON,LED_ON,!LED_ON);
       else rgb(!LED_ON,!LED_ON,LED_ON);
-    
+      #else
+      break; // Esse break eh inutil, mas deixar um possivel default sem argumentos eh pior
+      #endif // USE_RGB
   }
   
   if (!ajuda.forT()) holder = ' ';
-  digitalWrite(aciona, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_1, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_2, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_3, holder == 'S' ? ON : !ON);
-  // digitalWrite(IGN_4, holder == 'S' ? ON : !ON);
-  // digitalWrite(buzzPin, holder == 'S' ? ON : !ON);
-  // if(holder == 'S') Serial.println("ON");
+  #if PROPER_BOARD
+  digitalWrite(IGN, holder == 'S' ? ON_SIG : !ON_SIG);
+  #else
+  digitalWrite(IGN_1, holder == 'S' ? ON_SIG : !ON_SIG);
+  digitalWrite(IGN_2, holder == 'S' ? ON_SIG : !ON_SIG);
+  digitalWrite(IGN_3, holder == 'S' ? ON_SIG : !ON_SIG);
+  digitalWrite(IGN_4, holder == 'S' ? ON_SIG : !ON_SIG);
+  #endif // PROPER_BOARD
+  // digitalWrite(buzzPin, holder == 'S' ? ON_SIG : !ON_SIG);
+  // if(holder == 'S') Serial.println("ON_SIG");
   
+  #if BEEPING
   if(pingCheck != 0){
     if(beep(pingCheck > 0?3:1)) pingCheck=pingCheck+((pingCheck > 0) ? (-1) : (1));
   }
   else beep();
+  #endif // BEEPING
 
 }
 
