@@ -69,13 +69,18 @@ SoftwareSerial LoRa(2, 3);
 int data = ' ';
 int holder = ' ';
 int pingCheck = 0;
+bool pingResponse = false;
 
 #if USE_BUTTONS
-enum Buttons{blue=1, red=2, green=3, yellow=4};
-const Buttons password[] = {blue, green, blue, blue, green};
+enum Buttons{button_blue=1, button_red=2, button_green=3, button_yellow=4};
+const Buttons password[] = {button_blue, button_green, button_blue, button_blue, button_green};
 int passwordIndex = 0;
 const int passwordLen = sizeof(password)/sizeof(password[0]);
 #endif // USE_BUTTONS
+
+#if USE_RGB
+enum Colors:int{white=0b111, magenta=0b101, blue=0b001, cyan=0b011, green=0b010, yellow=0b110, red=0b100, black=0b000};
+#endif // USE_RGB
 
 class Helpful {
 private:
@@ -122,6 +127,19 @@ inline void rgb(bool r, bool g, bool b){
   digitalWrite(LED_G, g);
   digitalWrite(LED_B, b);
 }
+
+inline void rgb(Colors color){
+  switch(color){
+    case white: rgb(1,1,1); break;
+    case magenta: rgb(1,0,1); break;
+    case blue: rgb(0,0,1); break;
+    case cyan: rgb(0,1,1); break;
+    case green: rgb(0,1,0); break;
+    case yellow: rgb(1,1,0); break;
+    case red: rgb(1,0,0); break;
+    case black: rgb(0,0,0); break;
+  }
+}
 #endif // USE_RGB
 
 void setup() {
@@ -164,30 +182,14 @@ void setup() {
 #endif // BuZZ
 
 #if USE_RGB  
-  // Serial.println("Branco");
-  rgb(LED_ON,LED_ON,LED_ON);
-  delay(100);
-  // Serial.println("Vermelho");
-  rgb(LED_ON,!LED_ON,!LED_ON);
-  delay(100);
-  // Serial.println("Amarelo");
-  rgb(LED_ON,LED_ON,!LED_ON);
-  delay(100);
-  // Serial.println("Verde");
-  rgb(!LED_ON,LED_ON,!LED_ON);
-  delay(100);
-  // Serial.println("Ciano");
-  rgb(!LED_ON,LED_ON,LED_ON);
-  delay(100);
-  // Serial.println("Azul");
-  rgb(!LED_ON,!LED_ON,LED_ON);
-  delay(100);
-  // Serial.println("Magenta");
-  rgb(LED_ON,!LED_ON,LED_ON);
-  delay(100);
-  // Serial.println("Preto");
-  rgb(!LED_ON,!LED_ON,!LED_ON);
-  delay(100);
+  rgb(white);  delay(100);  // Serial.println("Branco");
+  rgb(magenta);  delay(100);  // Serial.println("Magenta");
+  rgb(blue);  delay(100);  // Serial.println("Azul");
+  rgb(cyan);  delay(100);  // Serial.println("Ciano");
+  rgb(green);  delay(100);  // Serial.println("Verde");
+  rgb(yellow);  delay(100);  // Serial.println("Amarelo");
+  rgb(red);  delay(100);  // Serial.println("Vermelho");
+  rgb(black);  delay(100);  // Serial.println("Preto");
 #endif // USE_RGB
 
 #if BEEPING
@@ -210,10 +212,12 @@ void loop() {
       {
         LoRa.print("T = ");
         LoRa.println(ajuda.sinceBegin());
+        pingCheck = 3;
+        pingResponse = true;
       } else if (data == 'T')  // Retorna estado do sinal
       {
         pingCheck = 3;
-      }
+      } 
     }
   }
 
@@ -226,9 +230,9 @@ void loop() {
   /* Botão Vermelho */
   if (digitalRead(B_R) == B_ON) {
     Serial.println("B_R");
-    #if USE_RGB
-    rgb(LED_ON,LED_ON,LED_ON);
-    #endif //USE_RGB
+#if USE_RGB
+    rgb(white);
+#endif //USE_RGB
     while (digitalRead(B_R) == B_ON);
 
     if(passwordIndex == passwordLen) {
@@ -237,43 +241,43 @@ void loop() {
       passwordIndex = 0;
     }
 
-    if(password[passwordIndex] == red) passwordIndex++;
+    if(password[passwordIndex] == button_red) passwordIndex++;
     else passwordIndex = 0;
   }
   
   /* Botão Azul */
   if (digitalRead(B_B) == B_ON) {
     Serial.println("B_B");
-    #if USE_RGB
-    rgb(LED_ON,LED_ON,LED_ON);
-    #endif // USE_RGB
+#if USE_RGB
+    rgb(white);
+#endif // USE_RGB
     while (digitalRead(B_B) == B_ON);
 
-    if(password[passwordIndex] == blue) passwordIndex++;
+    if(password[passwordIndex] == button_blue) passwordIndex++;
     else passwordIndex = 0;
   }
   
   /* Botão Verde */
   if (digitalRead(B_G) == B_ON) {
     Serial.println("B_G");
-    #if USE_RGB
-    rgb(LED_ON,LED_ON,LED_ON);
-    #endif // USE_RGB
+#if USE_RGB
+    rgb(white);
+#endif // USE_RGB
     while (digitalRead(B_G) == B_ON);
 
-    if(password[passwordIndex] == green) passwordIndex++;
+    if(password[passwordIndex] == button_green) passwordIndex++;
     else passwordIndex = 0;
   }
   
   /* Botão Amarelo */
   if (digitalRead(B_Y) == B_ON) {
     Serial.println("B_Y");
-    #if USE_RGB
-    rgb(LED_ON,LED_ON,LED_ON);
-    #endif // USE_RGB
+#if USE_RGB
+    rgb(white);
+#endif // USE_RGB
     while (digitalRead(B_Y) == B_ON);
 
-    if(password[passwordIndex] == yellow) passwordIndex++;
+    if(password[passwordIndex] == button_yellow) passwordIndex++;
     else passwordIndex = 0;
 
     LoRa.write('*');
@@ -284,37 +288,40 @@ void loop() {
   if(passwordIndex == passwordLen) pingCheck = 2;
 
 
-  #if USE_RGB
+#if USE_RGB
   if(passwordIndex == passwordLen) // Estado armado
-    rgb(LED_ON,!LED_ON,!LED_ON);
+    rgb(red);
   else if(passwordIndex>0) // Senha em percurso
-    rgb(LED_ON,LED_ON,!LED_ON);
+    rgb(yellow);
   else if(pingCheck > 0) // Ping com resposta positiva
-    rgb(!LED_ON,LED_ON,!LED_ON);
+    rgb(pingResponse?cyan:green);
   else if(ajuda.forT()) // Estado de acionamento
-    rgb(LED_ON,!LED_ON,LED_ON);
+    rgb(magenta);
   else // Estado normal
-    rgb(!LED_ON,!LED_ON,LED_ON);
-  #endif // USE_RGB
+  {
+    rgb(blue);
+    pingResponse = false;
+  }
+#endif // USE_RGB
   
   if (!ajuda.forT()) holder = ' ';
-  #if PROPER_BOARD
+#if PROPER_BOARD
   digitalWrite(IGN, holder == 'S' ? ON_SIG : !ON_SIG);
-  #else
+#else
   digitalWrite(IGN_1, holder == 'S' ? ON_SIG : !ON_SIG);
   digitalWrite(IGN_2, holder == 'S' ? ON_SIG : !ON_SIG);
   digitalWrite(IGN_3, holder == 'S' ? ON_SIG : !ON_SIG);
   digitalWrite(IGN_4, holder == 'S' ? ON_SIG : !ON_SIG);
-  #endif // PROPER_BOARD
+#endif // PROPER_BOARD
   // digitalWrite(buzzPin, holder == 'S' ? ON_SIG : !ON_SIG);
   // if(holder == 'S') Serial.println("ON_SIG");
   
-  #if BEEPING
+#if BEEPING
   if(pingCheck != 0){
     if(beep(pingCheck > 0?3:1)) pingCheck=pingCheck+((pingCheck > 0) ? (-1) : (1));
   }
   else beep();
-  #endif // BEEPING
+#endif // BEEPING
 
 }
 
