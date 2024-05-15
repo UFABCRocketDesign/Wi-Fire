@@ -130,14 +130,14 @@ inline void rgb(bool r, bool g, bool b){
 
 inline void rgb(Colors color){
   switch(color){
-    case white: rgb(1,1,1); break;
-    case magenta: rgb(1,0,1); break;
-    case blue: rgb(0,0,1); break;
-    case cyan: rgb(0,1,1); break;
-    case green: rgb(0,1,0); break;
-    case yellow: rgb(1,1,0); break;
-    case red: rgb(1,0,0); break;
-    case black: rgb(0,0,0); break;
+    case white: rgb(LED_ON,LED_ON,LED_ON); break;
+    case magenta: rgb(LED_ON,!LED_ON,LED_ON); break;
+    case blue: rgb(!LED_ON,!LED_ON,LED_ON); break;
+    case cyan: rgb(!LED_ON,LED_ON,LED_ON); break;
+    case green: rgb(!LED_ON,LED_ON,!LED_ON); break;
+    case yellow: rgb(LED_ON,LED_ON,!LED_ON); break;
+    case red: rgb(LED_ON,!LED_ON,!LED_ON); break;
+    case black: rgb(!LED_ON,!LED_ON,!LED_ON); break;
   }
 }
 #endif // USE_RGB
